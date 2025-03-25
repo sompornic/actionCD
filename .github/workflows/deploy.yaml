@@ -2,6 +2,10 @@ name: Trigger Helm Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker Image Tag to Deploy"
+        required: true
 
 jobs:
   trigger-helm:
