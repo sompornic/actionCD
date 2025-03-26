@@ -22,6 +22,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.PAT_TOKEN }}
-          repository: $REPO_OWNER/$REPO_NAME
+          repository: sompornic/helm-app
           event-type: deploy   
           client-payload: '{"imageTag": "${{ github.event.inputs.image_tag }}"}'
