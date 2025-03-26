@@ -23,5 +23,5 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           repository: $REPO_OWNER/$REPO_NAME
-          event-type: deploy
+          event-type: deploy   
           client-payload: '{"imageTag": "${{ github.event.inputs.image_tag }}"}'
