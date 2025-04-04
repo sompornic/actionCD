@@ -15,10 +15,9 @@ on:
     types: [push-deploy]
 
 env:
-  GIT_BRANCH: "main"
+  GIT_BRANCH_HELM: "main"
   APP_NAME: ${{ github.event.client_payload.inputs.repo.APP_NAME }}
   IMAGE_TAG: ${{ github.event.client_payload.inputs.repo.IMAGE_TAG }}
-  ZONE: ${{ github.event.client_payload.inputs.repo.APP_ENV }}
   NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
   NEXUS_URL: "registry.matador.ais.co.th"
   NEXUS_PATH: "living/sit"
@@ -71,7 +70,7 @@ jobs:
     - name: Set FILE_PATH and BRANCH_NAME from APP_NAME
       run: |
         echo "FILE_PATH=${APP_NAME}/values.yaml" >> $GITHUB_ENV
-        echo "BRANCH_NAME=${GIT_BRANCH}" >> $GITHUB_ENV
+        echo "BRANCH_NAME=${GIT_BRANCH_HELM}" >> $GITHUB_ENV
 
     - name: Update Helm values.yaml in ${{ env.BRANCH_NAME }} branch
       run: |
