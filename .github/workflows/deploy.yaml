@@ -18,7 +18,7 @@ env:
   GIT_BRANCH: "develop"
   APP_NAME: ${{ github.event.client_payload.inputs.repo.APP_NAME }}
   IMAGE_TAG: ${{ github.event.client_payload.inputs.repo.IMAGE_TAG }}
-  APP_ENV: ${{ github.event.client_payload.inputs.repo.APP_ENV }}
+  ZONE: ${{ github.event.client_payload.inputs.repo.APP_ENV }}
   NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
   NEXUS_URL: "registry.matador.ais.co.th"
   NEXUS_PATH: "living/sit"
@@ -31,7 +31,7 @@ env:
 jobs:
   pull-and-push:
     runs-on: ubuntu-latest
-    if: ${{ github.event.client_payload.zone == 'dev' || github.event.client_payload.zone == 'staging' || github.event.client_payload.zone == 'prod'}}
+    if: ${{ env.ZONE == 'dev' || env.ZONE == 'staging' }}
 
     steps:
       - name: Checkout pipelines
@@ -66,7 +66,7 @@ jobs:
   edit-helm:
     needs: pull-and-push
     runs-on: ubuntu-latest
-    if: ${{ github.event.client_payload.zone == 'dev' || github.event.client_payload.zone == 'staging' }}
+    if: ${{ env.ZONE == 'dev' || env.ZONE == 'staging' }}
     steps:
       - name: Set FILE_PATH from APP_NAME
         run: |
@@ -95,6 +95,7 @@ jobs:
             "https://api.github.com/repos/$OWNER_NAME/$REPO_NAME/contents/$FILE_PATH"
 
   deploy-dev:
+    needs: edit-helm
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.zone == 'dev' }} 
     steps:
@@ -117,6 +118,7 @@ jobs:
       #     helm upgrade --install $APP_NAME ./ --namespace testdeploy --create-namespace
 
   deploy-staging:
+    needs: edit-helm
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.zone == 'staging' }} 
     steps:
