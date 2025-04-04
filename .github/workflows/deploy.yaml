@@ -1,4 +1,4 @@
-name: Trigger Helm Deploy
+name: Push and Helm Deploy
 
 on:
   workflow_dispatch:
