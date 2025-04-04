@@ -35,44 +35,15 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           path: helm-chart
 
-      - name: Set up KUBECONFIG based on zone
-        run: |
-          # Auto deploy if zone is 'dev'
-          if [[ "${{ github.event.client_payload.zone }}" == "dev" ]]; then
-            echo "${{ secrets.KUBE_CONFIG_DEV }}" | base64 --decode > $HOME/.kube/config
-            export KUBECONFIG=$HOME/.kube/config
-            echo "🔵 Deploying to dev with KUBECONFIG set."
-          elif [[ "${{ github.event.inputs.zone }}" == "staging" ]]; then
-            echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 --decode > $HOME/.kube/config
-            export KUBECONFIG=$HOME/.kube/config
-            echo "🔵 Deploying to staging with KUBECONFIG set."
-          else
-            echo "Unknown zone"
-            exit 1
-          fi
-
-          echo "✅ KUBECONFIG set up complete (if required):"
-          ls -l $HOME/.kube/config
-
-      - name: Read image values from app1/values.yaml
-        id: read_values
-        run: |
-          # รับค่า app1 จาก payload
-          APP_NAME=${{ github.event.client_payload.appname }}
-          
-          # ใช้ค่า app1 ในการกำหนด path
-          echo "Using app: $APP_NAME"
-
-          # เช็คว่า app1 อยู่ใน path ที่ต้องการหรือไม่
-          cd helm-chart/$APP_NAME
-          IMAGE_REPO=$(yq e '.image.repository' ./values.yaml)
-          IMAGE_TAG=$(yq e '.image.tag' ./values.yaml)
-
-          echo "📦 IMAGE_REPO=$IMAGE_REPO"
-          echo "🏷️ IMAGE_TAG=$IMAGE_TAG"
-
-          echo "IMAGE_REPO=$IMAGE_REPO" >> $GITHUB_ENV
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+      - name: Set Kubernetes Context Based on Zone
+        uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: |
+            ${{ 
+              github.event.client_payload.zone == 'dev' && secrets.KUBE_CONFIG_DEV ||
+              github.event.inputs.zone == 'staging' && secrets.KUBE_CONFIG_STAGING ||
+              ''
+            }}
 
       - name: Deploy with Helm
         if: github.event.client_payload.zone == 'dev' || github.event.inputs.zone == 'staging'
