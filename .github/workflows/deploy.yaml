@@ -15,7 +15,7 @@ on:
     types: [push-deploy]
 
 env:
-  GIT_BRANCH: "develop"
+  GIT_BRANCH: "main"
   APP_NAME: ${{ github.event.client_payload.inputs.repo.APP_NAME }}
   IMAGE_TAG: ${{ github.event.client_payload.inputs.repo.IMAGE_TAG }}
   ZONE: ${{ github.event.client_payload.inputs.repo.APP_ENV }}
@@ -68,31 +68,33 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.client_payload.inputs.repo.APP_ENV == 'dev' || github.event.client_payload.inputs.repo.APP_ENV == 'staging' }}
     steps:
-      - name: Set FILE_PATH from APP_NAME
-        run: |
-          echo "FILE_PATH=${APP_NAME}/values.yaml" >> $GITHUB_ENV
+    - name: Set FILE_PATH and BRANCH_NAME from APP_NAME
+      run: |
+        echo "FILE_PATH=${APP_NAME}/values.yaml" >> $GITHUB_ENV
+        echo "BRANCH_NAME=${GIT_BRANCH}" >> $GITHUB_ENV
 
-      - name: Update Helm values.yaml via GitHub API
-        run: |
-          RESPONSE=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            "https://api.github.com/repos/$OWNER_NAME/$REPO_NAME/contents/$FILE_PATH")
+    - name: Update Helm values.yaml in ${{ env.BRANCH_NAME }} branch
+      run: |
+        RESPONSE=$(curl -s -H "Authorization: token $GH_TOKEN" \
+          "https://api.github.com/repos/$OWNER_NAME/$REPO_NAME/contents/$FILE_PATH?ref=$BRANCH_NAME")
 
-          FILE_SHA=$(echo "$RESPONSE" | jq -r '.sha')
-          FILE_CONTENT=$(echo "$RESPONSE" | jq -r '.content' | base64 -d)
-          UPDATED_CONTENT=$(echo "$FILE_CONTENT" | sed "s|tag: .*|tag: $IMAGE_TAG|")
-          ENCODED_CONTENT=$(echo "$UPDATED_CONTENT" | base64 -w 0)
+        FILE_SHA=$(echo "$RESPONSE" | jq -r '.sha')
+        FILE_CONTENT=$(echo "$RESPONSE" | jq -r '.content' | base64 -d)
+        UPDATED_CONTENT=$(echo "$FILE_CONTENT" | sed "s|tag: .*|tag: $IMAGE_TAG|")
+        ENCODED_CONTENT=$(echo "$UPDATED_CONTENT" | base64 -w 0)
 
-          PAYLOAD=$(jq -n \
-            --arg path "$FILE_PATH" \
-            --arg message "Update image.tag to $IMAGE_TAG" \
-            --arg content "$ENCODED_CONTENT" \
-            --arg sha "$FILE_SHA" \
-            '{ path: $path, message: $message, content: $content, sha: $sha }')
+        PAYLOAD=$(jq -n \
+          --arg path "$FILE_PATH" \
+          --arg message "Update image.tag to $IMAGE_TAG" \
+          --arg content "$ENCODED_CONTENT" \
+          --arg sha "$FILE_SHA" \
+          --arg branch "$BRANCH_NAME" \
+          '{ path: $path, message: $message, content: $content, sha: $sha, branch: $branch }')
 
-          curl -X PUT -H "Authorization: token $GH_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
-            "https://api.github.com/repos/$OWNER_NAME/$REPO_NAME/contents/$FILE_PATH"
+        curl -X PUT -H "Authorization: token $GH_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$PAYLOAD" \
+          "https://api.github.com/repos/$OWNER_NAME/$REPO_NAME/contents/$FILE_PATH"
 
   deploy-dev:
     needs: edit-helm
