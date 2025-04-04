@@ -31,7 +31,7 @@ env:
 jobs:
   pull-and-push:
     runs-on: ubuntu-latest
-    if: ${{ env.ZONE == 'dev' || env.ZONE == 'staging' }}
+    if: ${{ github.event.client_payload.inputs.repo.APP_ENV == 'dev' || github.event.client_payload.inputs.repo.APP_ENV == 'staging' }}
 
     steps:
       - name: Checkout pipelines
@@ -66,7 +66,7 @@ jobs:
   edit-helm:
     needs: pull-and-push
     runs-on: ubuntu-latest
-    if: ${{ env.ZONE == 'dev' || env.ZONE == 'staging' }}
+    if: ${{ github.event.client_payload.inputs.repo.APP_ENV == 'dev' || github.event.client_payload.inputs.repo.APP_ENV == 'staging' }}
     steps:
       - name: Set FILE_PATH from APP_NAME
         run: |
@@ -97,7 +97,7 @@ jobs:
   deploy-dev:
     needs: edit-helm
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.zone == 'dev' }} 
+    if: ${{ github.event.client_payload.inputs.repo.APP_ENV == 'dev' }} 
     steps:
       - name: Checkout Helm Chart Repo
         uses: actions/checkout@v3
