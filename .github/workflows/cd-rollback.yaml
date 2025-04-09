@@ -3,7 +3,7 @@ name: Rollback Helm Deploy
 on:
   workflow_dispatch:
     inputs:
-      app_name_rollback:
+      release_name_rollback:
         description: "เลือกแอปที่ต้องการ rollback"
         required: true
         type: choice
@@ -27,8 +27,8 @@ jobs:
       - name: Set Release & Namespace
         id: setup
         run: |
-          # กำหนด RELEASE_NAME จาก app_name_rollback
-          RELEASE_NAME="${{ github.event.inputs.app_name_rollback }}"
+          # กำหนด RELEASE_NAME จาก release_name_rollback
+          RELEASE_NAME="${{ github.event.inputs.release_name_rollback }}"
           NAMESPACE="${{ github.event.inputs.namespace_rollback }}"
 
           echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
