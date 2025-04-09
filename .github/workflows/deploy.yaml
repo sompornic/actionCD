@@ -5,7 +5,7 @@ on:
     inputs:
       image_tag:
         description: "Docker Image Tag to Deploy"
-        required: true
+        required: false
       zone:
         description: "Deployment Zone"
         required: true

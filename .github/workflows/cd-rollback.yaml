@@ -1,0 +1,45 @@
+name: Rollback Helm Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name_rollback:
+        description: "เลือกแอปที่ต้องการ rollback"
+        required: true
+        type: choice
+        options:
+          - core-app
+          - configmap
+          - user-service
+      namespace_rollback:
+        description: "เลือก Namespace"
+        required: true
+        type: choice
+        options:
+          - production
+          - infra
+          - backend
+  
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Release & Namespace
+        id: setup
+        run: |
+          # กำหนด RELEASE_NAME จาก app_name_rollback
+          RELEASE_NAME="${{ github.event.inputs.app_name_rollback }}"
+          NAMESPACE="${{ github.event.inputs.namespace_rollback }}"
+
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
+          echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+
+      - name: Set Kubernetes Context
+        uses: azure/k8s-set-context@v1
+        with:
+          kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+
+      - name: Rollback ไป revision ก่อนหน้า
+        run: |
+          echo "🔁 กำลัง rollback release: $RELEASE_NAME (namespace: $NAMESPACE)"
+          helm rollback "$RELEASE_NAME" 1 -n "$NAMESPACE"
